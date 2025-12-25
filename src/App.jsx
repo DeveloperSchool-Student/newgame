@@ -121,10 +121,10 @@ function AppContent() {
   const { showToast } = useToast();
   // Стан для активної локації (об'єкт з назвою, описом та типом)
   const [activeLocation, setActiveLocation] = useState(null);
-  
+
   // Стан для вибраного регіону на карті
   const [selectedRegion, setSelectedRegion] = useState(null);
-  
+
   // Стани для модальних вікон
   const [isModalOpen, setIsModalOpen] = useState({
     chat: false,
@@ -379,7 +379,7 @@ function AppContent() {
     (regionId) => {
       triggerHapticFeedback();
       setSelectedRegion(regionId);
-      
+
       // Встановлюємо активну локацію на основі вибраного регіону
       if (locationsData[regionId]) {
         const location = { ...locationsData[regionId] };
@@ -397,28 +397,27 @@ function AppContent() {
   const handleExplore = useCallback(async () => {
     triggerHapticFeedback();
     setIsSaving(true);
-    
+
     // 50% шанс на успіх
     const isSuccess = Math.random() > 0.5;
-    
+
     if (isSuccess) {
       // Успіх: знаходимо золото або предмет
       const foundGold = Math.floor(Math.random() * 50) + 10;
       const foundItem = Math.random() > 0.6; // 40% шанс знайти предмет
-      
+
       if (foundItem) {
         const item = generateRandomItem();
         addItem(item);
         showTelegramPopup(
           '🎉 Знайдено предмет!',
-          `Ви знайшли: ${item.name}\n\nРідкість: ${
-            item.rarity === 'common' ? 'Звичайна' :
+          `Ви знайшли: ${item.name}\n\nРідкість: ${item.rarity === 'common' ? 'Звичайна' :
             item.rarity === 'uncommon' ? 'Постійна' :
-            item.rarity === 'combat' ? 'Бойова' :
-            item.rarity === 'epic' ? 'Епічна' :
-            item.rarity === 'legendary' ? 'Легендарна' :
-            item.rarity === 'mythic' ? 'Міфічна' :
-            item.rarity === 'divine' ? 'Божественна' : 'Звичайна'
+              item.rarity === 'combat' ? 'Бойова' :
+                item.rarity === 'epic' ? 'Епічна' :
+                  item.rarity === 'legendary' ? 'Легендарна' :
+                    item.rarity === 'mythic' ? 'Міфічна' :
+                      item.rarity === 'divine' ? 'Божественна' : 'Звичайна'
           }`,
           [{ text: 'Чудово!', type: 'default' }]
         );
@@ -426,32 +425,32 @@ function AppContent() {
         // Застосування бонусів подій
         const eventGoldMultiplier = window.gameEvents?.getBonus?.('gold') || 1.0;
         const eventXPMultiplier = window.gameEvents?.getBonus?.('xp') || 1.0;
-        
+
         // Застосування бонусів підписки
         const subscriptionGoldMultiplier = window.gameSubscription?.active ? (window.gameSubscription.bonuses?.goldMultiplier || 1.0) : 1.0;
         const subscriptionXPMultiplier = window.gameSubscription?.active ? (window.gameSubscription.bonuses?.xpMultiplier || 1.0) : 1.0;
-        
+
         const totalGoldMultiplier = eventGoldMultiplier * subscriptionGoldMultiplier;
         const totalXPMultiplier = eventXPMultiplier * subscriptionXPMultiplier;
-        
+
         const finalGold = Math.floor(foundGold * totalGoldMultiplier);
         const finalXP = Math.floor((Math.random() * 10 + 5) * totalXPMultiplier);
-        
+
         addGold(finalGold);
         addExperience(finalXP);
-        
+
         showTelegramPopup(
           '💰 Знайдено золото!',
           `Ви знайшли ${finalGold} золотих монет!${eventGoldMultiplier > 1 ? ` (x${eventGoldMultiplier} бонус події!)` : ''}`,
           [{ text: 'Чудово!', type: 'default' }]
         );
       }
-      
+
       // Перевіряємо квести на дослідження
       if (window.questSystem?.checkProgress) {
         window.questSystem.checkProgress('daily', 1);
       }
-      
+
       // Перевіряємо квести на збір золота
       if (window.questSystem?.checkProgress && foundGold) {
         window.questSystem.checkProgress('gold_collect', foundGold);
@@ -460,7 +459,7 @@ function AppContent() {
       // Неуспіх: втрачаємо HP
       const damage = Math.floor(Math.random() * 15) + 5;
       updateHealth(-damage);
-      
+
       showTelegramPopup(
         '⚠️ Небезпека!',
         `Ви натрапили на небезпеку та втратили ${damage} HP!`,
@@ -484,7 +483,7 @@ function AppContent() {
   // Обробник полювання на монстрів / входу в бій
   const handleHuntMonsters = useCallback(() => {
     triggerHapticFeedback();
-    
+
     // Якщо це підземелля, відкриваємо бойовий екран
     if (activeLocation?.id === 'forgottenMines') {
       setIsModalOpen((prev) => ({ ...prev, battle: true }));
@@ -504,7 +503,7 @@ function AppContent() {
         const newHP = Math.max(0, prev.forgottenMines - damage);
         return { ...prev, forgottenMines: newHP };
       });
-      
+
       // Оновлюємо activeLocation з новим HP
       setActiveLocation((prev) => {
         if (prev?.id === 'forgottenMines') {
@@ -518,7 +517,7 @@ function AppContent() {
   // Обробник перемоги над босом
   const handleBossDefeat = useCallback(async () => {
     let experienceGained = 100 + Math.floor(Math.random() * 50);
-    
+
     // Застосування покращення клану "Досвідчені мисливці" (+10% до досвіду за босів)
     if (clan && (clan.upgrades || []).includes('experiencedHunters')) {
       experienceGained = Math.floor(experienceGained * 1.1);
@@ -549,32 +548,32 @@ function AppContent() {
         console.error('Помилка завантаження множника досвіду:', error);
       }
     }
-    
+
     // Застосування бонусів подій
     const eventGoldMultiplier = window.gameEvents?.getBonus?.('gold') || 1.0;
     const eventXPMultiplier = window.gameEvents?.getBonus?.('xp') || 1.0;
-    
+
     // Застосування бонусів підписки
     const subscriptionGoldMultiplier = window.gameSubscription?.active ? (window.gameSubscription.bonuses?.goldMultiplier || 1.0) : 1.0;
     const subscriptionXPMultiplier = window.gameSubscription?.active ? (window.gameSubscription.bonuses?.xpMultiplier || 1.0) : 1.0;
-    
+
     const totalGoldMultiplier = eventGoldMultiplier * subscriptionGoldMultiplier;
     const totalXPMultiplier = eventXPMultiplier * subscriptionXPMultiplier;
-    
+
     experienceGained = Math.floor(experienceGained * totalXPMultiplier);
     const goldGained = Math.floor(experienceGained * 2 * totalGoldMultiplier);
-    
+
     addExperience(experienceGained);
     addGold(goldGained);
-    
+
     // Додаємо XP до бойового пропуску
     if (typeof window !== 'undefined' && window.addBattlePassXP) {
       window.addBattlePassXP(experienceGained);
     }
-    
+
     setVictoryData({ experience: experienceGained });
     setIsModalOpen((prev) => ({ ...prev, battle: false, victory: true }));
-    
+
     // Скидаємо HP боса для наступного бою
     setBossesHP((prev) => ({ ...prev, forgottenMines: 500 }));
 
@@ -597,7 +596,7 @@ function AppContent() {
         console.error('Помилка оновлення вбитих босів:', error);
       }
     }
-    
+
     // Перевіряємо квести на вбивство босів
     if (window.questSystem?.checkProgress) {
       window.questSystem.checkProgress('boss_kill', 1);
@@ -651,7 +650,7 @@ function AppContent() {
     triggerHapticFeedback();
     setIsModalOpen((prev) => ({ ...prev, shop: true }));
   }, [triggerHapticFeedback]);
-  
+
   const handleOpenTransport = useCallback(() => {
     triggerHapticFeedback();
     setIsModalOpen((prev) => ({ ...prev, transport: true }));
@@ -661,7 +660,7 @@ function AppContent() {
     triggerHapticFeedback();
     setIsModalOpen((prev) => ({ ...prev, resourceGathering: true }));
   }, [triggerHapticFeedback]);
-  
+
   const handleLocationChange = useCallback((newLocationId) => {
     if (locationsData[newLocationId]) {
       const location = { ...locationsData[newLocationId] };
@@ -686,88 +685,88 @@ function AppContent() {
       ...prev,
       ownerKingdom: player.kingdom,
     }));
-    
+
     // Перевіряємо квести на захоплення провінцій
     if (window.questSystem?.checkProgress) {
       window.questSystem.checkProgress('province_capture', 1, provinceId);
     }
   }, [triggerHapticFeedback, captureProvince, player.kingdom, activeLocation, showTelegramPopup]);
-  
+
   const handleOpenQuest = useCallback(() => {
     triggerHapticFeedback();
     setIsModalOpen((prev) => ({ ...prev, quest: true }));
   }, [triggerHapticFeedback]);
-  
+
   const handleOpenAchievements = useCallback(() => {
     triggerHapticFeedback();
     setIsModalOpen((prev) => ({ ...prev, achievements: true }));
   }, [triggerHapticFeedback]);
-  
+
   const handleOpenPvP = useCallback(() => {
     triggerHapticFeedback();
     setIsModalOpen((prev) => ({ ...prev, pvp: true }));
   }, [triggerHapticFeedback]);
-  
+
   const handleOpenStatistics = useCallback(() => {
     triggerHapticFeedback();
     setIsModalOpen((prev) => ({ ...prev, statistics: true }));
   }, [triggerHapticFeedback]);
-  
+
   const handleOpenEvents = useCallback(() => {
     triggerHapticFeedback();
     setIsModalOpen((prev) => ({ ...prev, events: true }));
   }, [triggerHapticFeedback]);
-  
+
   const handleOpenSkills = useCallback(() => {
     triggerHapticFeedback();
     setIsModalOpen((prev) => ({ ...prev, skills: true }));
   }, [triggerHapticFeedback]);
-  
+
   const handleOpenCrafting = useCallback(() => {
     triggerHapticFeedback();
     setIsModalOpen((prev) => ({ ...prev, crafting: true }));
   }, [triggerHapticFeedback]);
-  
+
   const handleOpenClanWars = useCallback(() => {
     triggerHapticFeedback();
     setIsModalOpen((prev) => ({ ...prev, clanWars: true }));
   }, [triggerHapticFeedback]);
-  
+
   const handleOpenBattlePass = useCallback(() => {
     triggerHapticFeedback();
     setIsModalOpen((prev) => ({ ...prev, battlePass: true }));
   }, [triggerHapticFeedback]);
-  
+
   const handleOpenSubscription = useCallback(() => {
     triggerHapticFeedback();
     setIsModalOpen((prev) => ({ ...prev, subscription: true }));
   }, [triggerHapticFeedback]);
-  
+
   const handleOpenMessaging = useCallback(() => {
     triggerHapticFeedback();
     setIsModalOpen((prev) => ({ ...prev, messaging: true }));
   }, [triggerHapticFeedback]);
-  
+
   const handleOpenClan = useCallback(() => {
     triggerHapticFeedback();
     setIsModalOpen((prev) => ({ ...prev, clan: true }));
   }, [triggerHapticFeedback]);
-  
+
   const handleOpenReferral = useCallback(() => {
     triggerHapticFeedback();
     setIsModalOpen((prev) => ({ ...prev, referral: true }));
   }, [triggerHapticFeedback]);
-  
+
   const handleOpenLeaderboard = useCallback(() => {
     triggerHapticFeedback();
     setIsModalOpen((prev) => ({ ...prev, leaderboard: true }));
   }, [triggerHapticFeedback]);
-  
+
   const handleOpenPremium = useCallback(() => {
     triggerHapticFeedback();
     setIsModalOpen((prev) => ({ ...prev, premium: true }));
   }, [triggerHapticFeedback]);
-  
+
   const handleOpenAdmin = useCallback(() => {
     triggerHapticFeedback();
     setIsModalOpen((prev) => ({ ...prev, admin: true }));
@@ -871,7 +870,6 @@ function AppContent() {
           onOpenEvents={handleOpenEvents}
           onOpenSkills={handleOpenSkills}
           onOpenCrafting={handleOpenCrafting}
-          onOpenClanWars={handleOpenClanWars}
           onOpenBattlePass={handleOpenBattlePass}
           onOpenSubscription={handleOpenSubscription}
           onOpenMessaging={handleOpenMessaging}
