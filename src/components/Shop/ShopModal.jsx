@@ -38,7 +38,7 @@ export const ShopModal = ({ isOpen, onClose, locationId, telegramId }) => {
   const ownerKingdom = getProvinceOwner(locationId);
   const isPlayerKingdom = ownerKingdom === player.kingdom;
   const taxRate = getProvinceTaxRate(locationId);
-  
+
   // Ціни залежать від того, чи це ваше королівство
   const priceMultiplier = isPlayerKingdom ? 0.8 : 1.2; // Своїм дешевше на 20%, чужим дорожче на 20%
 
@@ -90,7 +90,7 @@ export const ShopModal = ({ isOpen, onClose, locationId, telegramId }) => {
   };
 
   const getSellableItems = () => {
-    return player.inventory.filter((item) => 
+    return player.inventory.filter((item) =>
       item.type === 'weapon' || item.type === 'armor' || item.type === 'potion'
     );
   };
@@ -121,31 +121,28 @@ export const ShopModal = ({ isOpen, onClose, locationId, telegramId }) => {
         <div className="flex border-b border-fantasy-purple/30">
           <button
             onClick={() => setActiveTab('buy')}
-            className={`flex-1 py-3 px-4 font-semibold transition-colors ${
-              activeTab === 'buy'
+            className={`flex-1 py-3 px-4 font-semibold transition-colors ${activeTab === 'buy'
                 ? 'bg-fantasy-purple/30 text-fantasy-gold border-b-2 border-fantasy-gold'
                 : 'text-gray-400 hover:text-white'
-            }`}
+              }`}
           >
             НПС Магазин
           </button>
           <button
             onClick={() => setActiveTab('sell')}
-            className={`flex-1 py-3 px-4 font-semibold transition-colors ${
-              activeTab === 'sell'
+            className={`flex-1 py-3 px-4 font-semibold transition-colors ${activeTab === 'sell'
                 ? 'bg-fantasy-purple/30 text-fantasy-gold border-b-2 border-fantasy-gold'
                 : 'text-gray-400 hover:text-white'
-            }`}
+              }`}
           >
             Продати НПС
           </button>
           <button
             onClick={() => setActiveTab('marketplace')}
-            className={`flex-1 py-3 px-4 font-semibold transition-colors ${
-              activeTab === 'marketplace'
+            className={`flex-1 py-3 px-4 font-semibold transition-colors ${activeTab === 'marketplace'
                 ? 'bg-fantasy-purple/30 text-fantasy-gold border-b-2 border-fantasy-gold'
                 : 'text-gray-400 hover:text-white'
-            }`}
+              }`}
           >
             Маркетплейс
           </button>
@@ -194,11 +191,10 @@ export const ShopModal = ({ isOpen, onClose, locationId, telegramId }) => {
                     <button
                       onClick={() => handleBuy(item)}
                       disabled={player.gold < price || isProcessing}
-                      className={`w-full mt-2 py-2 px-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
-                        player.gold >= price && !isProcessing
+                      className={`w-full mt-2 py-2 px-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${player.gold >= price && !isProcessing
                           ? 'bg-fantasy-purple hover:bg-fantasy-purple/80 text-white'
                           : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                      }`}
+                        }`}
                     >
                       {isProcessing ? (
                         <>
@@ -213,7 +209,7 @@ export const ShopModal = ({ isOpen, onClose, locationId, telegramId }) => {
                 );
               })}
             </div>
-          ) : (
+          ) : activeTab === 'sell' ? (
             <div className="space-y-3">
               {getSellableItems().length === 0 ? (
                 <div className="text-center text-gray-400 py-8">
@@ -239,9 +235,8 @@ export const ShopModal = ({ isOpen, onClose, locationId, telegramId }) => {
                       <button
                         onClick={() => handleSell(item)}
                         disabled={isProcessing}
-                        className={`w-full mt-2 py-2 px-4 bg-fantasy-red hover:bg-red-600 text-white rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
-                          isProcessing ? 'opacity-50 cursor-not-allowed' : ''
-                        }`}
+                        className={`w-full mt-2 py-2 px-4 bg-fantasy-red hover:bg-red-600 text-white rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''
+                          }`}
                       >
                         {isProcessing ? (
                           <>
