@@ -205,11 +205,10 @@ export const ClanManager = ({ isOpen, onClose, onOpenClanWars }) => {
                     <button
                       onClick={() => setIsCreating(true)}
                       disabled={player.gold < 1000}
-                      className={`px-6 py-3 rounded-lg font-semibold transition-all ${
-                        player.gold >= 1000
+                      className={`px-6 py-3 rounded-lg font-semibold transition-all ${player.gold >= 1000
                           ? 'bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-white'
                           : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                      }`}
+                        }`}
                     >
                       Створити клан (1000 🪙)
                     </button>
@@ -239,8 +238,7 @@ export const ClanManager = ({ isOpen, onClose, onOpenClanWars }) => {
                             Подати заявку
                           </button>
                         </div>
-                      ))
-                      )}
+                      ))}
                     </div>
                   </div>
                 </>
@@ -284,11 +282,10 @@ export const ClanManager = ({ isOpen, onClose, onOpenClanWars }) => {
                       <button
                         onClick={handleCreateClan}
                         disabled={!newClanName.trim() || !newClanTag.trim() || player.gold < 1000}
-                        className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all ${
-                          newClanName.trim() && newClanTag.trim() && player.gold >= 1000
+                        className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all ${newClanName.trim() && newClanTag.trim() && player.gold >= 1000
                             ? 'bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 hover:to-yellow-500 text-white'
                             : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                        }`}
+                          }`}
                       >
                         Створити (1000 🪙)
                       </button>
@@ -358,11 +355,10 @@ export const ClanManager = ({ isOpen, onClose, onOpenClanWars }) => {
                     <button
                       onClick={handleDonate}
                       disabled={donateAmount <= 0 || player.gold < donateAmount}
-                      className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                        donateAmount > 0 && player.gold >= donateAmount
+                      className={`px-4 py-2 rounded-lg font-semibold transition-all ${donateAmount > 0 && player.gold >= donateAmount
                           ? 'bg-amber-600 hover:bg-amber-500 text-white'
                           : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                      }`}
+                        }`}
                     >
                       Пожертвувати
                     </button>
@@ -380,9 +376,8 @@ export const ClanManager = ({ isOpen, onClose, onOpenClanWars }) => {
                       return (
                         <div
                           key={upgrade.id}
-                          className={`bg-amber-800/50 border-2 rounded-lg p-4 ${
-                            isPurchased ? 'border-green-600' : 'border-amber-600'
-                          }`}
+                          className={`bg-amber-800/50 border-2 rounded-lg p-4 ${isPurchased ? 'border-green-600' : 'border-amber-600'
+                            }`}
                         >
                           <div className="flex justify-between items-start">
                             <div>
@@ -398,11 +393,10 @@ export const ClanManager = ({ isOpen, onClose, onOpenClanWars }) => {
                               <button
                                 onClick={() => setSelectedUpgrade(upgrade.id)}
                                 disabled={(clan.gold_bank || 0) < upgrade.cost}
-                                className={`px-4 py-2 rounded-lg font-semibold transition-all ${
-                                  (clan.gold_bank || 0) >= upgrade.cost
+                                className={`px-4 py-2 rounded-lg font-semibold transition-all ${(clan.gold_bank || 0) >= upgrade.cost
                                     ? 'bg-amber-600 hover:bg-amber-500 text-white'
                                     : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                                }`}
+                                  }`}
                               >
                                 {upgrade.cost} 🪙
                               </button>
