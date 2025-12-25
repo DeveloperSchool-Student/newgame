@@ -111,7 +111,7 @@ export const LocationChatRealtime = ({ isOpen, onClose, activeLocation }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-    const handleSend = async () => {
+  const handleSend = async () => {
     if (!inputValue.trim() || !activeLocation?.id) return;
 
     if (!supabase) {
@@ -267,36 +267,33 @@ export const LocationChatRealtime = ({ isOpen, onClose, activeLocation }) => {
               ×
             </button>
           </div>
-          
+
           {/* Фільтри */}
           <div className="flex gap-2">
             <button
               onClick={() => setFilter('all')}
-              className={`px-3 py-1 rounded text-sm font-semibold transition-all ${
-                filter === 'all'
+              className={`px-3 py-1 rounded text-sm font-semibold transition-all ${filter === 'all'
                   ? 'bg-fantasy-purple text-white'
                   : 'bg-fantasy-dark/50 text-gray-400 hover:text-white'
-              }`}
+                }`}
             >
               Всі
             </button>
             <button
               onClick={() => setFilter('normal')}
-              className={`px-3 py-1 rounded text-sm font-semibold transition-all ${
-                filter === 'normal'
+              className={`px-3 py-1 rounded text-sm font-semibold transition-all ${filter === 'normal'
                   ? 'bg-fantasy-purple text-white'
                   : 'bg-fantasy-dark/50 text-gray-400 hover:text-white'
-              }`}
+                }`}
             >
               Звичайні
             </button>
             <button
               onClick={() => setFilter('rp')}
-              className={`px-3 py-1 rounded text-sm font-semibold transition-all ${
-                filter === 'rp'
+              className={`px-3 py-1 rounded text-sm font-semibold transition-all ${filter === 'rp'
                   ? 'bg-fantasy-purple text-white'
                   : 'bg-fantasy-dark/50 text-gray-400 hover:text-white'
-              }`}
+                }`}
             >
               RP
             </button>
@@ -313,117 +310,115 @@ export const LocationChatRealtime = ({ isOpen, onClose, activeLocation }) => {
               return true;
             })
             .map((message) => {
-            const isOwnMessage = message.sender_telegram_id === window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString();
-            return (
-              <div
-                key={message.id}
-                className={`flex flex-col ${
-                  isOwnMessage ? 'items-end' : 'items-start'
-                }`}
-              >
+              const isOwnMessage = message.sender_telegram_id === window.Telegram?.WebApp?.initDataUnsafe?.user?.id?.toString();
+              return (
                 <div
-                  className={`max-w-[80%] rounded-lg p-3 ${
-                    message.is_rp
-                      ? 'bg-fantasy-purple/20 border border-fantasy-purple/50 italic text-fantasy-gold'
-                      : isOwnMessage
-                      ? 'bg-fantasy-purple/40 text-white'
-                      : 'bg-fantasy-dark/50 text-gray-200 border border-fantasy-purple/30'
-                  }`}
+                  key={message.id}
+                  className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'
+                    }`}
                 >
-                  <div className="flex items-center gap-2 mb-1">
-                    <span
-                      className="text-xs font-semibold"
-                      style={{
-                        color: message.sender_rank && RANKS[message.sender_rank]
-                          ? RANKS[message.sender_rank].color
-                          : '#ffffff',
-                      }}
-                    >
-                      {message.sender_name}
-                    </span>
-                    {message.sender_rank && RANKS[message.sender_rank] && (
+                  <div
+                    className={`max-w-[80%] rounded-lg p-3 ${message.is_rp
+                        ? 'bg-fantasy-purple/20 border border-fantasy-purple/50 italic text-fantasy-gold'
+                        : isOwnMessage
+                          ? 'bg-fantasy-purple/40 text-white'
+                          : 'bg-fantasy-dark/50 text-gray-200 border border-fantasy-purple/30'
+                      }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
                       <span
-                        className="text-xs px-1 py-0.5 bg-fantasy-dark/50 rounded"
-                        style={{ color: RANKS[message.sender_rank].color }}
-                      >
-                        {RANKS[message.sender_rank].name}
-                      </span>
-                    )}
-                    <span className="text-xs text-gray-400">Lv.{message.sender_level}</span>
-                  </div>
-                  <div className={`text-sm ${message.is_rp ? 'text-fantasy-gold' : ''}`}>
-                    {editingMessage === message.id ? (
-                      <input
-                        type="text"
-                        value={editText}
-                        onChange={(e) => setEditText(e.target.value)}
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter') {
-                            handleEditMessage(message.id, editText);
-                            setEditingMessage(null);
-                            setEditText('');
-                          }
-                          if (e.key === 'Escape') {
-                            setEditingMessage(null);
-                            setEditText('');
-                          }
+                        className="text-xs font-semibold"
+                        style={{
+                          color: message.sender_rank && RANKS[message.sender_rank]
+                            ? RANKS[message.sender_rank].color
+                            : '#ffffff',
                         }}
-                        className="w-full bg-fantasy-dark border border-fantasy-purple rounded px-2 py-1 text-white"
-                        autoFocus
-                      />
-                    ) : (
-                      <>
-                        {message.is_rp ? `*${message.text}*` : message.text}
-                        {message.edited_at && (
-                          <span className="text-xs text-gray-500 ml-2">(ред.)</span>
-                        )}
-                      </>
-                    )}
-                  </div>
-                  {/* Реакції */}
-                  <div className="flex gap-1 mt-2">
-                    {['👍', '❤️', '😂', '😮', '😢'].map((emoji) => (
-                      <button
-                        key={emoji}
-                        onClick={() => handleReaction(message.id, emoji)}
-                        className="text-lg hover:scale-125 transition-transform"
                       >
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="flex items-center justify-between mt-1">
-                    <div className="text-xs text-gray-500">
-                      {new Date(message.created_at).toLocaleTimeString('uk-UA', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                        {message.sender_name}
+                      </span>
+                      {message.sender_rank && RANKS[message.sender_rank] && (
+                        <span
+                          className="text-xs px-1 py-0.5 bg-fantasy-dark/50 rounded"
+                          style={{ color: RANKS[message.sender_rank].color }}
+                        >
+                          {RANKS[message.sender_rank].name}
+                        </span>
+                      )}
+                      <span className="text-xs text-gray-400">Lv.{message.sender_level}</span>
                     </div>
-                    {isOwnMessage && editingMessage !== message.id && (
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => {
-                            setEditingMessage(message.id);
-                            setEditText(message.text);
+                    <div className={`text-sm ${message.is_rp ? 'text-fantasy-gold' : ''}`}>
+                      {editingMessage === message.id ? (
+                        <input
+                          type="text"
+                          value={editText}
+                          onChange={(e) => setEditText(e.target.value)}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              handleEditMessage(message.id, editText);
+                              setEditingMessage(null);
+                              setEditText('');
+                            }
+                            if (e.key === 'Escape') {
+                              setEditingMessage(null);
+                              setEditText('');
+                            }
                           }}
-                          className="text-xs text-blue-400 hover:text-blue-300"
-                        >
-                          ✏️
-                        </button>
+                          className="w-full bg-fantasy-dark border border-fantasy-purple rounded px-2 py-1 text-white"
+                          autoFocus
+                        />
+                      ) : (
+                        <>
+                          {message.is_rp ? `*${message.text}*` : message.text}
+                          {message.edited_at && (
+                            <span className="text-xs text-gray-500 ml-2">(ред.)</span>
+                          )}
+                        </>
+                      )}
+                    </div>
+                    {/* Реакції */}
+                    <div className="flex gap-1 mt-2">
+                      {['👍', '❤️', '😂', '😮', '😢'].map((emoji) => (
                         <button
-                          onClick={() => handleDeleteMessage(message.id)}
-                          className="text-xs text-red-400 hover:text-red-300"
+                          key={emoji}
+                          onClick={() => handleReaction(message.id, emoji)}
+                          className="text-lg hover:scale-125 transition-transform"
                         >
-                          🗑️
+                          {emoji}
                         </button>
+                      ))}
+                    </div>
+                    <div className="flex items-center justify-between mt-1">
+                      <div className="text-xs text-gray-500">
+                        {new Date(message.created_at).toLocaleTimeString('uk-UA', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
                       </div>
-                    )}
+                      {isOwnMessage && editingMessage !== message.id && (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              setEditingMessage(message.id);
+                              setEditText(message.text);
+                            }}
+                            className="text-xs text-blue-400 hover:text-blue-300"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={() => handleDeleteMessage(message.id)}
+                            className="text-xs text-red-400 hover:text-red-300"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })
-          )}
+              );
+            })
+          }
           <div ref={messagesEndRef} />
         </div>
 
