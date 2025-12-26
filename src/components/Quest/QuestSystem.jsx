@@ -88,12 +88,15 @@ export const QuestSystem = ({ isOpen, onClose, telegramId, onProvinceCapture }) 
           return;
         }
 
-        // Отримуємо активні квести гравця
+        // Перевіряємо чи потрібен скидання щоденних квестів
+        await checkDailyReset();
+
+        // Отримуємо активні та виконані (але не забрані) квести
         const { data: playerQuests, error } = await supabase
           .from('player_quests')
           .select('*')
           .eq('telegram_id', telegramId.toString())
-          .eq('status', 'active');
+          .in('status', ['active', 'completed']);
 
         if (error) {
           console.error('Помилка завантаження квестів:', error);
@@ -104,36 +107,44 @@ export const QuestSystem = ({ isOpen, onClose, telegramId, onProvinceCapture }) 
           return;
         }
 
-        // Якщо немає активних квестів, створюємо нові
+        // Якщо немає квестів взагалі (навіть 'claimed' перевірили в checkDailyReset), створюємо нові
         if (!playerQuests || playerQuests.length === 0) {
-          await initializeDailyQuests();
-        } else {
-          // Завантажуємо дані квестів
-          const questData = playerQuests.map((pq) => {
-            const questTemplate = [...DAILY_QUESTS, ...PROVINCE_QUESTS].find(
-              (q) => q.id === pq.quest_id
-            );
-            if (!questTemplate) return null;
-            return {
-              ...questTemplate,
-              progress: pq.progress || 0,
-              questDbId: pq.id,
-            };
-          }).filter(Boolean);
-          setQuests(questData);
+          // Якщо це перший запуск, ініціалізуємо
+          // Але checkDailyReset мав би це зробити. 
+          // Якщо він нічого не створив (наприклад, вже є claimed квести), то тут буде пусто, і це ОК.
+          // Але якщо ми тут, то можливо треба перевірити чи є claimed.
         }
 
-        // Отримуємо час скидання щоденних квестів
-        const resetTime = localStorage.getItem('daily_quest_reset');
-        if (resetTime) {
-          setDailyResetTime(new Date(resetTime));
-        } else {
-          const tomorrow = new Date();
-          tomorrow.setDate(tomorrow.getDate() + 1);
-          tomorrow.setHours(0, 0, 0, 0);
-          setDailyResetTime(tomorrow);
-          localStorage.setItem('daily_quest_reset', tomorrow.toISOString());
-        }
+        // Розподіляємо квести (active -> quests, completed -> completedQuests)
+        const active = [];
+        const completed = [];
+
+        (playerQuests || []).forEach(pq => {
+          const questTemplate = [...DAILY_QUESTS, ...PROVINCE_QUESTS].find(q => q.id === pq.quest_id);
+          if (!questTemplate) return;
+
+          const questObj = {
+            ...questTemplate,
+            progress: pq.progress || 0,
+            questDbId: pq.id,
+            status: pq.status
+          };
+
+          if (pq.status === 'completed') {
+            completed.push(questObj);
+          } else {
+            active.push(questObj);
+          }
+        });
+
+        setQuests(active);
+        setCompletedQuests(completed);
+
+        // Таймер (візуальний)
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(0, 0, 0, 0);
+        setDailyResetTime(tomorrow);
 
         setIsLoading(false);
       } catch (error) {
@@ -145,7 +156,39 @@ export const QuestSystem = ({ isOpen, onClose, telegramId, onProvinceCapture }) 
     loadQuests();
   }, [isOpen, telegramId]);
 
-  // Ініціалізація щоденних квестів
+  // Перевірка та ініціалізація щоденних квестів
+  const checkDailyReset = async () => {
+    if (!supabase || !telegramId) return;
+
+    try {
+      // Перевіряємо чи є БУДЬ-ЯКІ щоденні квести створені за останні 20 годин (приблизно "сьогодні")
+      // Або просто перевіряємо, чи є квести з датою створення сьогодні
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const { data: existingDailies, error } = await supabase
+        .from('player_quests')
+        .select('created_at')
+        .eq('telegram_id', telegramId.toString())
+        .eq('quest_type', QUEST_TYPES.DAILY)
+        .gte('created_at', startOfDay.toISOString())
+        .limit(1);
+
+      if (error) throw error;
+
+      // Якщо вже є квести за сьогодні (активні, виконані або забрані) - нічого не робимо
+      if (existingDailies && existingDailies.length > 0) {
+        return;
+      }
+
+      // Якщо немає - видаляємо старі та створюємо нові
+      await initializeDailyQuests();
+
+    } catch (error) {
+      console.error('Помилка перевірки щоденних квестів:', error);
+    }
+  };
+
   const initializeDailyQuests = async () => {
     if (!supabase || !telegramId) {
       setQuests(DAILY_QUESTS);
@@ -153,7 +196,7 @@ export const QuestSystem = ({ isOpen, onClose, telegramId, onProvinceCapture }) 
     }
 
     try {
-      // Видаляємо старі щоденні квести
+      // Видаляємо ВСІ старі щоденні квести
       await supabase
         .from('player_quests')
         .delete()
@@ -170,22 +213,11 @@ export const QuestSystem = ({ isOpen, onClose, telegramId, onProvinceCapture }) 
         created_at: new Date().toISOString(),
       }));
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('player_quests')
-        .insert(newQuests)
-        .select();
+        .insert(newQuests);
 
-      if (!error && data) {
-        const questData = data.map((pq) => {
-          const questTemplate = DAILY_QUESTS.find((q) => q.id === pq.quest_id);
-          return {
-            ...questTemplate,
-            progress: 0,
-            questDbId: pq.id,
-          };
-        }).filter(Boolean);
-        setQuests(questData);
-      }
+      if (error) console.error("Error inserting quests", error);
     } catch (error) {
       console.error('Помилка ініціалізації квестів:', error);
     }
@@ -265,11 +297,11 @@ export const QuestSystem = ({ isOpen, onClose, telegramId, onProvinceCapture }) 
     if (!telegramId) return;
 
     try {
-      // Видаляємо квест з бази
+      // Оновлюємо статус на 'claimed' замість видалення
       if (supabase && quest.questDbId) {
         await supabase
           .from('player_quests')
-          .delete()
+          .update({ status: 'claimed' })
           .eq('id', quest.questDbId);
       }
 
@@ -367,7 +399,7 @@ export const QuestSystem = ({ isOpen, onClose, telegramId, onProvinceCapture }) 
                         <div className="flex-1">
                           <h4 className="text-lg font-bold text-white mb-1">{quest.title}</h4>
                           <p className="text-sm text-gray-400 mb-3">{quest.description}</p>
-                          
+
                           {/* Прогрес */}
                           <div className="mb-3">
                             <div className="flex justify-between text-xs text-gray-400 mb-1">
@@ -429,7 +461,7 @@ export const QuestSystem = ({ isOpen, onClose, telegramId, onProvinceCapture }) 
                         <div className="flex-1">
                           <h4 className="text-lg font-bold text-white mb-1">{quest.title}</h4>
                           <p className="text-sm text-gray-400 mb-3">{quest.description}</p>
-                          
+
                           {/* Нагороди */}
                           <div className="flex gap-2 text-sm mb-3">
                             {quest.reward.gold && (

@@ -58,7 +58,8 @@ export const PlayerStatistics = ({ isOpen, onClose, telegramId }) => {
           .from('player_quests')
           .select('id')
           .eq('telegram_id', telegramId.toString())
-          .eq('status', 'completed');
+          .eq('telegram_id', telegramId.toString())
+          .in('status', ['completed', 'claimed']);
 
         // Розраховуємо час гри
         let totalPlayTime = 0;

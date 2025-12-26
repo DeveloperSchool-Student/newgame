@@ -87,13 +87,15 @@ const WEEKLY_EVENTS = [
 ];
 
 // Святкові події
-const HOLIDAY_EVENTS = {
+const HOLIDAY_CONFIG = {
   valentine: {
     id: 'valentine',
     name: 'День Святого Валентина',
     description: 'Спеціальний бос та подвійні нагороди',
-    startDate: '2024-02-14',
-    endDate: '2024-02-16',
+    startMonth: 1, // February (0-indexed)
+    startDay: 14,
+    endMonth: 1,
+    endDay: 16,
     boss: EVENT_BOSSES.valentine,
     bonus: { goldMultiplier: 1.5, xpMultiplier: 1.5 },
     icon: '💕',
@@ -102,8 +104,10 @@ const HOLIDAY_EVENTS = {
     id: 'newyear',
     name: 'Новий Рік',
     description: 'Спеціальний бос та потрійні нагороди',
-    startDate: '2024-12-31',
-    endDate: '2025-01-02',
+    startMonth: 11, // December
+    startDay: 31,
+    endMonth: 0, // January
+    endDay: 2,
     boss: EVENT_BOSSES.newyear,
     bonus: { goldMultiplier: 3.0, xpMultiplier: 3.0 },
     icon: '🎊',
@@ -112,8 +116,10 @@ const HOLIDAY_EVENTS = {
     id: 'easter',
     name: 'Великдень',
     description: 'Спеціальний бос та подвійні нагороди',
-    startDate: '2024-03-31',
-    endDate: '2024-04-02',
+    startMonth: 2, // March (approximate)
+    startDay: 31,
+    endMonth: 3, // April
+    endDay: 2,
     boss: EVENT_BOSSES.easter,
     bonus: { goldMultiplier: 1.5, xpMultiplier: 1.5 },
     icon: '🐰',
@@ -122,8 +128,10 @@ const HOLIDAY_EVENTS = {
     id: 'halloween',
     name: 'Хелловін',
     description: 'Спеціальний бос та подвійні нагороди',
-    startDate: '2024-10-31',
-    endDate: '2024-11-02',
+    startMonth: 9, // October
+    startDay: 31,
+    endMonth: 10, // November
+    endDay: 2,
     boss: EVENT_BOSSES.halloween,
     bonus: { goldMultiplier: 2.0, xpMultiplier: 2.0 },
     icon: '🎃',
@@ -153,11 +161,24 @@ export const EventSystem = ({ isOpen, onClose, telegramId }) => {
       }
 
       // Перевіряємо святкові події
-      Object.values(HOLIDAY_EVENTS).forEach((event) => {
-        const startDate = new Date(event.startDate);
-        const endDate = new Date(event.endDate);
+      Object.values(HOLIDAY_CONFIG).forEach((event) => {
+        const currentYear = now.getFullYear();
+        let startDate = new Date(currentYear, event.startMonth, event.startDay);
+        let endDate = new Date(currentYear, event.endMonth, event.endDay);
+
+        // Handle year wrap for New Year (Dec 31 - Jan 2)
+        if (event.endMonth < event.startMonth) {
+          if (now.getMonth() === event.endMonth) {
+            // If we are in Jan, start was last year
+            startDate.setFullYear(currentYear - 1);
+          } else {
+            // If we are in Dec, end is next year
+            endDate.setFullYear(currentYear + 1);
+          }
+        }
+
         if (now >= startDate && now <= endDate) {
-          active.push({ ...event, active: true });
+          active.push({ ...event, active: true, startDate: startDate.toISOString(), endDate: endDate.toISOString() });
         }
       });
 
@@ -279,9 +300,9 @@ export const EventSystem = ({ isOpen, onClose, telegramId }) => {
                               <div>
                                 <div className="text-lg font-bold text-white">{event.boss.name}</div>
                                 <div className="text-sm text-gray-400">
-                                  Локація: {event.boss.location === 'capital' ? 'Столиця' : 
-                                           event.boss.location === 'darkForest' ? 'Темний ліс' : 
-                                           'Забуті шахти'}
+                                  Локація: {event.boss.location === 'capital' ? 'Столиця' :
+                                    event.boss.location === 'darkForest' ? 'Темний ліс' :
+                                      'Забуті шахти'}
                                 </div>
                               </div>
                             </div>

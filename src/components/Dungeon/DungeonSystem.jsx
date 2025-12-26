@@ -63,7 +63,7 @@ const DUNGEONS = {
 const generateMonster = (dungeonId, level, playerLevel) => {
   const dungeon = DUNGEONS[dungeonId];
   const monsterLevel = Math.min(dungeon.minLevel + level, dungeon.maxLevel);
-  
+
   const monsters = {
     shadowCaves: [
       { name: 'Тіньовий Слизняк', emoji: '👾', multiplier: 1.0 },
@@ -161,12 +161,12 @@ export const DungeonSystem = ({ isOpen, onClose }) => {
       // Монстр переможений
       setBattleLog(prev => [...prev, `✅ ${currentMonster.name} переможений!`]);
       setBattleLog(prev => [...prev, `+${currentMonster.expReward} досвіду, +${currentMonster.goldReward} золота`]);
-      
+
       addExperience(currentMonster.expReward);
       addGold(currentMonster.goldReward);
-      
+
       setInBattle(false);
-      
+
       // Можливість перейти на наступний рівень
       const dungeon = DUNGEONS[selectedDungeon];
       if (currentLevel < dungeon.levels) {
@@ -189,10 +189,16 @@ export const DungeonSystem = ({ isOpen, onClose }) => {
     // Перевірка смерті гравця
     if (player.health - damageToPlayer <= 0) {
       setBattleLog(prev => [...prev, `💀 Ви загинули! Підземелля провалено.`]);
+      const goldPenalty = Math.floor(player.gold * 0.05);
+      if (goldPenalty > 0) {
+        addGold(-goldPenalty);
+        setBattleLog(prev => [...prev, `💸 Втрачено ${goldPenalty} золота.`]);
+      }
+
       setInBattle(false);
       setIsExploring(false);
       setTimeout(() => {
-        updateHealth(player.maxHealth); // Відновлюємо HP
+        updateHealth(player.maxHealth); // Відновлюємо HP для респауну
         setSelectedDungeon(null);
       }, 2000);
     }
@@ -246,11 +252,10 @@ export const DungeonSystem = ({ isOpen, onClose }) => {
                 <div
                   key={dungeon.id}
                   onClick={() => handleSelectDungeon(dungeon.id)}
-                  className={`cursor-pointer border-2 rounded-lg p-4 transition-all hover:scale-105 ${
-                    player.level >= dungeon.minLevel
+                  className={`cursor-pointer border-2 rounded-lg p-4 transition-all hover:scale-105 ${player.level >= dungeon.minLevel
                       ? 'border-fantasy-purple bg-fantasy-dark/50 hover:border-fantasy-gold'
                       : 'border-gray-600 bg-gray-800/30 opacity-50 cursor-not-allowed'
-                  }`}
+                    }`}
                 >
                   <div className="text-5xl text-center mb-2">{dungeon.emoji}</div>
                   <div className="text-white font-bold text-center mb-1">{dungeon.name}</div>

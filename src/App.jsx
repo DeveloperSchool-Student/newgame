@@ -302,6 +302,7 @@ function AppContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showCharacterCreation, setShowCharacterCreation] = useState(false);
+  const [selectedOpponent, setSelectedOpponent] = useState(null);
 
   // Авторизація та завантаження прогресу
   useEffect(() => {
@@ -576,8 +577,12 @@ function AppContent() {
         const subscriptionGoldMultiplier = window.gameSubscription?.active ? (window.gameSubscription.bonuses?.goldMultiplier || 1.0) : 1.0;
         const subscriptionXPMultiplier = window.gameSubscription?.active ? (window.gameSubscription.bonuses?.xpMultiplier || 1.0) : 1.0;
 
-        const totalGoldMultiplier = eventGoldMultiplier * subscriptionGoldMultiplier;
-        const totalXPMultiplier = eventXPMultiplier * subscriptionXPMultiplier;
+        // Застосування бонусів навичок
+        const skillGoldMultiplier = player.bonuses?.goldMultiplier || 1.0;
+        const skillXPMultiplier = player.bonuses?.xpMultiplier || 1.0;
+
+        const totalGoldMultiplier = eventGoldMultiplier * subscriptionGoldMultiplier * skillGoldMultiplier;
+        const totalXPMultiplier = eventXPMultiplier * subscriptionXPMultiplier * skillXPMultiplier;
 
         const finalGold = Math.floor(foundGold * totalGoldMultiplier);
         const finalXP = Math.floor((Math.random() * 10 + 5) * totalXPMultiplier);
@@ -703,8 +708,12 @@ function AppContent() {
     const subscriptionGoldMultiplier = window.gameSubscription?.active ? (window.gameSubscription.bonuses?.goldMultiplier || 1.0) : 1.0;
     const subscriptionXPMultiplier = window.gameSubscription?.active ? (window.gameSubscription.bonuses?.xpMultiplier || 1.0) : 1.0;
 
-    const totalGoldMultiplier = eventGoldMultiplier * subscriptionGoldMultiplier;
-    const totalXPMultiplier = eventXPMultiplier * subscriptionXPMultiplier;
+    // Застосування бонусів навичок
+    const skillGoldMultiplier = player.bonuses?.goldMultiplier || 1.0;
+    const skillXPMultiplier = player.bonuses?.xpMultiplier || 1.0;
+
+    const totalGoldMultiplier = eventGoldMultiplier * subscriptionGoldMultiplier * skillGoldMultiplier;
+    const totalXPMultiplier = eventXPMultiplier * subscriptionXPMultiplier * skillXPMultiplier;
 
     experienceGained = Math.floor(experienceGained * totalXPMultiplier);
     const goldGained = Math.floor(experienceGained * 2 * totalGoldMultiplier);
@@ -850,6 +859,7 @@ function AppContent() {
 
   const handleOpenPvP = useCallback(() => {
     triggerHapticFeedback();
+    setSelectedOpponent(null);
     setIsModalOpen((prev) => ({ ...prev, pvp: true }));
   }, [triggerHapticFeedback]);
 
@@ -916,6 +926,19 @@ function AppContent() {
   const handleOpenReferral = useCallback(() => {
     triggerHapticFeedback();
     setIsModalOpen((prev) => ({ ...prev, referral: true }));
+  }, [triggerHapticFeedback]);
+
+  const handleAttackPlayer = useCallback((opponent) => {
+    triggerHapticFeedback();
+    // Перетворюємо об'єкт з LocationInfo на формат, який очікує PvPSystem
+    const normalizedOpponent = {
+      telegram_id: opponent.id,
+      name: `${opponent.firstName} ${opponent.lastName}`.trim(),
+      level: opponent.level,
+      kingdom: opponent.kingdom,
+    };
+    setSelectedOpponent(normalizedOpponent);
+    setIsModalOpen((prev) => ({ ...prev, pvp: true }));
   }, [triggerHapticFeedback]);
 
   // Обробник створення персонажа
@@ -1032,6 +1055,7 @@ function AppContent() {
           onCaptureProvince={handleCaptureProvince}
           onOpenTransport={handleOpenTransport}
           onOpenResourceGathering={handleOpenResourceGathering}
+          onAttackPlayer={handleAttackPlayer}
         />
       )}
 
@@ -1153,11 +1177,14 @@ function AppContent() {
         onClose={() => handleCloseModal('achievements')}
         telegramId={telegramId}
       />
-      <PvPSystem
-        isOpen={isModalOpen.pvp}
-        onClose={() => handleCloseModal('pvp')}
-        telegramId={telegramId}
-      />
+      {isModalOpen.pvp && (
+        <PvPSystem
+          isOpen={isModalOpen.pvp}
+          onClose={() => handleCloseModal('pvp')}
+          telegramId={telegramId}
+          initialOpponent={selectedOpponent}
+        />
+      )}
       <PlayerStatistics
         isOpen={isModalOpen.statistics}
         onClose={() => handleCloseModal('statistics')}

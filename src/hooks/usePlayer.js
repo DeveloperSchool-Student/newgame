@@ -24,20 +24,20 @@ const initialPlayerState = {
   crystals: 0, // Кристали (преміум валюта)
   bossesKilled: 0, // Кількість вбитих босів
   inventory: [
-    { 
-      id: 1, 
-      name: 'Меч початківця', 
-      type: 'weapon', 
+    {
+      id: 1,
+      name: 'Меч початківця',
+      type: 'weapon',
       slot: 'weapon',
       rarity: 'common',
       quantity: 1,
       basePrice: 100,
       stats: { strength: 5 }
     },
-    { 
-      id: 2, 
-      name: 'Зілля здоров\'я', 
-      type: 'potion', 
+    {
+      id: 2,
+      name: 'Зілля здоров\'я',
+      type: 'potion',
       slot: null,
       rarity: 'common',
       quantity: 3,
@@ -70,6 +70,16 @@ const initialPlayerState = {
     intelligence: 6,
     defense: 5,
   },
+  bonuses: {
+    goldMultiplier: 1,
+    xpMultiplier: 1,
+    defenseMultiplier: 1,
+    damageMultiplier: 1,
+    criticalChance: 0,
+    rareItemChance: 0,
+    healthRegen: 0,
+    magicDamage: 0,
+  },
 };
 
 export const usePlayer = () => {
@@ -86,7 +96,7 @@ export const usePlayer = () => {
         newExp -= expToNext;
         newLevel += 1;
         expToNext = Math.floor(expToNext * 1.5);
-        
+
         // При підвищенні рівня збільшуємо характеристики
         return {
           ...prev,
@@ -113,6 +123,13 @@ export const usePlayer = () => {
         experienceToNext: expToNext,
       };
     });
+  }, []);
+
+  const updateBonuses = useCallback((newBonuses) => {
+    setPlayer((prev) => ({
+      ...prev,
+      bonuses: { ...prev.bonuses, ...newBonuses },
+    }));
   }, []);
 
   const updateHealth = useCallback((amount) => {
@@ -154,7 +171,7 @@ export const usePlayer = () => {
           };
         }
       }
-      
+
       // Додаємо новий предмет
       return {
         ...prev,
@@ -256,7 +273,7 @@ export const usePlayer = () => {
       if (!item || (item.type !== 'potion' && item.type !== 'consumable')) return prev;
 
       let updates = { ...prev };
-      
+
       // Застосовуємо ефект
       if (item.effect) {
         if (item.effect.health) {
@@ -322,6 +339,16 @@ export const usePlayer = () => {
     }));
   }, []);
 
+  const updateMaxStats = useCallback((updates) => {
+    setPlayer((prev) => ({
+      ...prev,
+      maxHealth: updates.maxHealth ? prev.maxHealth + updates.maxHealth : prev.maxHealth,
+      health: updates.maxHealth ? prev.health + updates.maxHealth : prev.health, // Heal for the amount gained
+      maxMana: updates.maxMana ? prev.maxMana + updates.maxMana : prev.maxMana,
+      mana: updates.maxMana ? prev.mana + updates.maxMana : prev.mana,
+    }));
+  }, []);
+
   // Ініціалізація персонажа після створення
   const initializeCharacter = useCallback((characterData) => {
     const { race, kingdom, class: classData, name } = characterData;
@@ -383,6 +410,8 @@ export const usePlayer = () => {
     unequipItem,
     useItem,
     updateStats,
+    updateMaxStats,
+    updateBonuses,
     loadPlayerFromDB,
     initializeCharacter,
   };

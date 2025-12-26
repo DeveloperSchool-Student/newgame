@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { saveProgress } from '../../lib/supabaseClient';
 import { LoadingSpinner } from '../UI/LoadingSpinner';
 
-export const PvPSystem = ({ isOpen, onClose, telegramId }) => {
+export const PvPSystem = ({ isOpen, onClose, telegramId, initialOpponent }) => {
   const { player, updateHealth, addGold, addExperience } = usePlayerContext();
   const [opponents, setOpponents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -19,9 +19,22 @@ export const PvPSystem = ({ isOpen, onClose, telegramId }) => {
   const [playerHP, setPlayerHP] = useState(100);
   const [opponentHP, setOpponentHP] = useState(100);
 
+  // Автоматичний старт дуелі з initialOpponent
+  useEffect(() => {
+    if (isOpen && initialOpponent && !isInBattle && !battleOpponent) {
+      startDuel(initialOpponent);
+    }
+  }, [isOpen, initialOpponent]);
+
   // Завантаження опонентів та рейтингу
   useEffect(() => {
     if (!isOpen || !telegramId) return;
+
+    if (initialOpponent) {
+      // Якщо ми вже маємо опонента, не потрібно вантажити список
+      setIsLoading(false);
+      return;
+    }
 
     const loadData = async () => {
       setIsLoading(true);
@@ -83,7 +96,7 @@ export const PvPSystem = ({ isOpen, onClose, telegramId }) => {
     };
 
     loadData();
-  }, [isOpen, telegramId]);
+  }, [isOpen, telegramId, initialOpponent]);
 
   // Початок дуелі
   const startDuel = useCallback(async (opponent) => {
@@ -282,21 +295,19 @@ export const PvPSystem = ({ isOpen, onClose, telegramId }) => {
         <div className="flex border-b border-fantasy-purple/30 mb-6">
           <button
             onClick={() => setActiveTab('duel')}
-            className={`flex-1 px-4 py-3 font-semibold transition-all ${
-              activeTab === 'duel'
+            className={`flex-1 px-4 py-3 font-semibold transition-all ${activeTab === 'duel'
                 ? 'bg-fantasy-purple/20 text-fantasy-gold border-b-2 border-fantasy-gold'
                 : 'text-gray-400 hover:text-white'
-            }`}
+              }`}
           >
             Дуелі
           </button>
           <button
             onClick={() => setActiveTab('arena')}
-            className={`flex-1 px-4 py-3 font-semibold transition-all ${
-              activeTab === 'arena'
+            className={`flex-1 px-4 py-3 font-semibold transition-all ${activeTab === 'arena'
                 ? 'bg-fantasy-purple/20 text-fantasy-gold border-b-2 border-fantasy-gold'
                 : 'text-gray-400 hover:text-white'
-            }`}
+              }`}
           >
             Арена
           </button>

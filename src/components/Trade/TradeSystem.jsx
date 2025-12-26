@@ -28,7 +28,8 @@ export const TradeSystem = ({ isOpen, onClose, telegramId }) => {
         .select(`
           *,
           initiator:profiles!trades_initiator_id_fkey(telegram_id, name, level),
-          partner:profiles!trades_partner_id_fkey(telegram_id, name, level)
+          partner:profiles!trades_partner_id_fkey(telegram_id, name, level),
+          trade_offers(*)
         `)
         .or(`initiator_id.eq.${telegramId},partner_id.eq.${telegramId}`)
         .eq('status', 'pending')
@@ -226,7 +227,7 @@ export const TradeSystem = ({ isOpen, onClose, telegramId }) => {
 
       // Обробляємо передачу предметів
       // (В реальному додатку це має бути транзакція на сервері)
-      
+
       // Оновлюємо статус обміну
       const { error: updateError } = await supabase
         .from('trades')
@@ -264,7 +265,7 @@ export const TradeSystem = ({ isOpen, onClose, telegramId }) => {
   // Отримати інформацію про предмет
   const getItemInfo = (itemId) => {
     if (itemId === 'gold') return { name: 'Золото', icon: '🪙', rarity: 'common' };
-    
+
     const allItems = {
       ...RESOURCES,
       ...Object.fromEntries(WEAPONS.map(w => [w.id, w])),
@@ -298,21 +299,19 @@ export const TradeSystem = ({ isOpen, onClose, telegramId }) => {
         <div className="flex bg-slate-800 border-b border-green-500">
           <button
             onClick={() => setActiveTab('create')}
-            className={`flex-1 py-3 px-4 font-semibold transition-colors ${
-              activeTab === 'create'
+            className={`flex-1 py-3 px-4 font-semibold transition-colors ${activeTab === 'create'
                 ? 'bg-green-600 text-white'
                 : 'text-gray-300 hover:bg-slate-700'
-            }`}
+              }`}
           >
             ➕ Створити обмін
           </button>
           <button
             onClick={() => setActiveTab('active')}
-            className={`flex-1 py-3 px-4 font-semibold transition-colors ${
-              activeTab === 'active'
+            className={`flex-1 py-3 px-4 font-semibold transition-colors ${activeTab === 'active'
                 ? 'bg-green-600 text-white'
                 : 'text-gray-300 hover:bg-slate-700'
-            }`}
+              }`}
           >
             🔄 Активні обміни ({activeTrades.length})
           </button>
@@ -416,14 +415,90 @@ export const TradeSystem = ({ isOpen, onClose, telegramId }) => {
                             <p className="text-white font-bold mb-2">
                               Ваша пропозиція {myConfirmed && '✅'}
                             </p>
-                            {/* Тут має бути список пропозицій */}
-                            <p className="text-gray-400 text-sm">Порожньо</p>
+                            {/* Список пропозицій */}
+                            <div className="space-y-2 mb-3">
+                              {(trade.trade_offers || [])
+                                .filter(offer => offer.owner_id === telegramId)
+                                .map((offer, idx) => {
+                                  const info = getItemInfo(offer.item_id);
+                                  return (
+                                    <div key={idx} className="flex items-center gap-2 text-sm text-gray-200 bg-slate-800 p-2 rounded">
+                                      <span>{info.icon}</span>
+                                      <span>{info.name}</span>
+                                      {offer.item_id === 'gold' ? (
+                                        <span className="text-yellow-400 font-bold">x{offer.gold_amount}</span>
+                                      ) : (
+                                        <span>x{offer.quantity}</span>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              {!(trade.trade_offers || []).some(offer => offer.owner_id === telegramId) && (
+                                <p className="text-gray-400 text-sm italic">Нічого не додано</p>
+                              )}
+                            </div>
+
+                            {/* Контроли додавання (якщо не підтверджено) */}
+                            {!myConfirmed && (
+                              <div className="space-y-2 mt-4 pt-4 border-t border-slate-600">
+                                <div className="flex gap-2">
+                                  <select
+                                    className="flex-1 bg-slate-800 text-white text-xs p-1 rounded border border-gray-600"
+                                    onChange={(e) => {
+                                      if (e.target.value) {
+                                        addItemToOffer(trade.id, e.target.value, 1);
+                                        e.target.value = "";
+                                      }
+                                    }}
+                                  >
+                                    <option value="">+ Предмет</option>
+                                    {player.inventory.filter(i => i.quantity > 0).map(item => {
+                                      const info = getItemInfo(item.id);
+                                      return <option key={item.id} value={item.id}>{info.name} (x{item.quantity})</option>;
+                                    })}
+                                  </select>
+                                </div>
+                                <div className="flex gap-2">
+                                  <input
+                                    type="number"
+                                    placeholder="Золото"
+                                    className="flex-1 bg-slate-800 text-white text-xs p-1 rounded border border-gray-600"
+                                    onKeyPress={(e) => {
+                                      if (e.key === 'Enter') {
+                                        addGoldToOffer(trade.id, parseInt(e.target.value));
+                                        e.target.value = "";
+                                      }
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            )}
                           </div>
                           <div className="bg-slate-700 rounded-lg p-4">
                             <p className="text-white font-bold mb-2">
                               Пропозиція партнера {partnerConfirmed && '✅'}
                             </p>
-                            <p className="text-gray-400 text-sm">Порожньо</p>
+                            <div className="space-y-2">
+                              {(trade.trade_offers || [])
+                                .filter(offer => offer.owner_id !== telegramId)
+                                .map((offer, idx) => {
+                                  const info = getItemInfo(offer.item_id);
+                                  return (
+                                    <div key={idx} className="flex items-center gap-2 text-sm text-gray-200 bg-slate-800 p-2 rounded">
+                                      <span>{info.icon}</span>
+                                      <span>{info.name}</span>
+                                      {offer.item_id === 'gold' ? (
+                                        <span className="text-yellow-400 font-bold">x{offer.gold_amount}</span>
+                                      ) : (
+                                        <span>x{offer.quantity}</span>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              {!(trade.trade_offers || []).some(offer => offer.owner_id !== telegramId) && (
+                                <p className="text-gray-400 text-sm italic">Нічого не додано</p>
+                              )}
+                            </div>
                           </div>
                         </div>
 

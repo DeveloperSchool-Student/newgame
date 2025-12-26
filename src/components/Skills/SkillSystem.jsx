@@ -148,24 +148,60 @@ const SKILL_TREE = [
 ];
 
 export const SkillSystem = ({ isOpen, onClose, telegramId }) => {
-  const { player, updateStats, updateMana, addItem } = usePlayerContext();
+  const { player, updateStats, updateMana, addItem, updateMaxStats, updateBonuses } = usePlayerContext();
   const { showToast } = useToast();
   const [playerSkills, setPlayerSkills] = useState({});
   const [availableSkillPoints, setAvailableSkillPoints] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('all');
 
+  // Helper to calculate total bonuses
+  const calculateTotalBonuses = useCallback((skillsMap) => {
+    const bonuses = {
+      goldMultiplier: 1,
+      xpMultiplier: 1,
+      defenseMultiplier: 1,
+      damageMultiplier: 1,
+      criticalChance: 0,
+      rareItemChance: 0,
+      healthRegen: 0,
+      magicDamage: 0,
+    };
+
+    SKILL_TREE.forEach(skill => {
+      const level = skillsMap[skill.id] || 0;
+      if (level > 0 && skill.type === SKILL_TYPES.PASSIVE) {
+        const effect = skill.effect(level);
+        Object.entries(effect).forEach(([key, value]) => {
+          if (key === 'goldMultiplier' || key === 'defenseMultiplier' || key === 'damageMultiplier') {
+            // For multipliers, we might want to add them or multiply them. 
+            // Based on effect definition: 1 + level * 0.2
+            // Let's assume they replace the base 1.
+            // But if multiple skills affect the same multiplier, they should stack additive or multiplicative?
+            // Simple additive stack of the bonus part: (val - 1)
+            bonuses[key] += (value - 1);
+          } else if (bonuses[key] !== undefined) {
+            bonuses[key] += value;
+          }
+        });
+      }
+    });
+    return bonuses;
+  }, []);
+
   // Завантаження навичок гравця
   useEffect(() => {
-    if (!isOpen || !telegramId) return;
+    if (!telegramId) return;
 
     const loadSkills = async () => {
-      setIsLoading(true);
+      // Don't show loading spinner if it's a background load (when not open)
+      if (isOpen) setIsLoading(true);
+
       try {
         if (!supabase) {
           setPlayerSkills({});
           setAvailableSkillPoints(Math.max(0, player.level - 1));
-          setIsLoading(false);
+          if (isOpen) setIsLoading(false);
           return;
         }
 
@@ -183,21 +219,25 @@ export const SkillSystem = ({ isOpen, onClose, telegramId }) => {
             skillsMap[skill.skill_id] = skill.level || 0;
           });
           setPlayerSkills(skillsMap);
+
+          // Apply active bonuses
+          const newBonuses = calculateTotalBonuses(skillsMap);
+          updateBonuses(newBonuses);
         }
 
         // Розраховуємо доступні очки навичок (1 за рівень, починаючи з рівня 2)
         const totalSkillPoints = Math.max(0, player.level - 1);
-        const usedSkillPoints = Object.values(playerSkills).reduce((sum, level) => sum + level, 0);
+        const usedSkillPoints = (skillsData || []).reduce((sum, skill) => sum + (skill.level || 0), 0);
         setAvailableSkillPoints(totalSkillPoints - usedSkillPoints);
       } catch (error) {
         console.error('Помилка завантаження навичок:', error);
       } finally {
-        setIsLoading(false);
+        if (isOpen) setIsLoading(false);
       }
     };
 
     loadSkills();
-  }, [isOpen, telegramId, player.level]);
+  }, [isOpen, telegramId, player.level, calculateTotalBonuses, updateBonuses]);
 
   // Оновлення доступних очок навичок
   useEffect(() => {
@@ -209,7 +249,7 @@ export const SkillSystem = ({ isOpen, onClose, telegramId }) => {
   // Перевірка вимог для навички
   const canLearnSkill = useCallback((skill) => {
     if (!skill.requirements || skill.requirements.length === 0) return true;
-    
+
     return skill.requirements.every((req) => {
       const currentLevel = playerSkills[req.skillId] || 0;
       return currentLevel >= req.level;
@@ -238,7 +278,7 @@ export const SkillSystem = ({ isOpen, onClose, telegramId }) => {
 
     try {
       const newLevel = currentLevel + 1;
-      
+
       if (supabase) {
         await supabase
           .from('player_skills')
@@ -255,13 +295,25 @@ export const SkillSystem = ({ isOpen, onClose, telegramId }) => {
       showToast(`Навичка "${skill.name}" вивчена до рівня ${newLevel}!`, 'success');
 
       // Застосовуємо ефекти навички
+      // Застосовуємо ефекти навички
       const effect = skill.effect(newLevel);
+
+      // Handle Permanent Stats (e.g., Max Mana)
       if (effect.maxMana) {
-        // Оновлюємо максимальну ману (потрібно додати метод в PlayerContext)
+        const oldEffect = currentLevel > 0 ? skill.effect(currentLevel) : { maxMana: 0 };
+        const delta = effect.maxMana - (oldEffect.maxMana || 0);
+        if (delta > 0) {
+          updateMaxStats({ maxMana: delta });
+        }
       }
-      if (effect.defenseMultiplier) {
-        // Оновлюємо захист
-      }
+
+      // Handle Permanent Defense changes if calculated as base stat? 
+      // Current system uses multipliers in bonuses, so we update bonuses below.
+
+      // Update Bonuses
+      const newSkillsMap = { ...playerSkills, [skill.id]: newLevel };
+      const newBonuses = calculateTotalBonuses(newSkillsMap);
+      updateBonuses(newBonuses);
 
       // Зберігаємо прогрес
       if (telegramId) {
@@ -309,51 +361,46 @@ export const SkillSystem = ({ isOpen, onClose, telegramId }) => {
             <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
               <button
                 onClick={() => setActiveCategory('all')}
-                className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap ${
-                  activeCategory === 'all'
+                className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap ${activeCategory === 'all'
                     ? 'bg-fantasy-purple text-white'
                     : 'bg-fantasy-dark/50 text-gray-400 hover:text-white'
-                }`}
+                  }`}
               >
                 Всі
               </button>
               <button
                 onClick={() => setActiveCategory(SKILL_CATEGORIES.COMBAT)}
-                className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap ${
-                  activeCategory === SKILL_CATEGORIES.COMBAT
+                className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap ${activeCategory === SKILL_CATEGORIES.COMBAT
                     ? 'bg-red-600 text-white'
                     : 'bg-fantasy-dark/50 text-gray-400 hover:text-white'
-                }`}
+                  }`}
               >
                 ⚔️ Бойові
               </button>
               <button
                 onClick={() => setActiveCategory(SKILL_CATEGORIES.DEFENSE)}
-                className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap ${
-                  activeCategory === SKILL_CATEGORIES.DEFENSE
+                className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap ${activeCategory === SKILL_CATEGORIES.DEFENSE
                     ? 'bg-blue-600 text-white'
                     : 'bg-fantasy-dark/50 text-gray-400 hover:text-white'
-                }`}
+                  }`}
               >
                 🛡️ Захисні
               </button>
               <button
                 onClick={() => setActiveCategory(SKILL_CATEGORIES.UTILITY)}
-                className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap ${
-                  activeCategory === SKILL_CATEGORIES.UTILITY
+                className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap ${activeCategory === SKILL_CATEGORIES.UTILITY
                     ? 'bg-yellow-600 text-white'
                     : 'bg-fantasy-dark/50 text-gray-400 hover:text-white'
-                }`}
+                  }`}
               >
                 💎 Утилітарні
               </button>
               <button
                 onClick={() => setActiveCategory(SKILL_CATEGORIES.MAGIC)}
-                className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap ${
-                  activeCategory === SKILL_CATEGORIES.MAGIC
+                className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap ${activeCategory === SKILL_CATEGORIES.MAGIC
                     ? 'bg-purple-600 text-white'
                     : 'bg-fantasy-dark/50 text-gray-400 hover:text-white'
-                }`}
+                  }`}
               >
                 ✨ Магічні
               </button>
@@ -369,13 +416,12 @@ export const SkillSystem = ({ isOpen, onClose, telegramId }) => {
                 return (
                   <div
                     key={skill.id}
-                    className={`border-2 rounded-lg p-4 ${
-                      currentLevel > 0
+                    className={`border-2 rounded-lg p-4 ${currentLevel > 0
                         ? 'border-green-500 bg-green-900/20'
                         : canLearn
-                        ? 'border-fantasy-purple bg-fantasy-dark/50'
-                        : 'border-gray-600 bg-gray-900/50 opacity-60'
-                    }`}
+                          ? 'border-fantasy-purple bg-fantasy-dark/50'
+                          : 'border-gray-600 bg-gray-900/50 opacity-60'
+                      }`}
                   >
                     <div className="flex items-start gap-4">
                       <div className="text-4xl">{skill.icon}</div>
@@ -444,17 +490,16 @@ export const SkillSystem = ({ isOpen, onClose, telegramId }) => {
                         <button
                           onClick={() => learnSkill(skill)}
                           disabled={!canLearn || !canUpgrade}
-                          className={`w-full py-2 px-4 rounded-lg font-semibold transition-all ${
-                            canLearn && canUpgrade
+                          className={`w-full py-2 px-4 rounded-lg font-semibold transition-all ${canLearn && canUpgrade
                               ? 'bg-fantasy-purple hover:bg-purple-600 text-white'
                               : 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                          }`}
+                            }`}
                         >
                           {currentLevel === 0
                             ? `Вивчити (${skill.cost.skillPoints} очок)`
                             : currentLevel < skill.maxLevel
-                            ? `Покращити (${skill.cost.skillPoints} очок)`
-                            : 'Максимальний рівень'}
+                              ? `Покращити (${skill.cost.skillPoints} очок)`
+                              : 'Максимальний рівень'}
                         </button>
                       </div>
                     </div>

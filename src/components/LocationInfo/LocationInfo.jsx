@@ -4,7 +4,7 @@ import { KINGDOMS } from '../../data/kingdoms';
 import { usePlayerContext } from '../../contexts/PlayerContext';
 import { getPlayersInLocation, updatePlayerLocation } from '../../lib/supabaseClient';
 
-export const LocationInfo = ({ location, onEnterChat, onHuntMonsters, onExplore, onOpenShop, onCaptureProvince, onOpenTransport, onOpenResourceGathering }) => {
+export const LocationInfo = ({ location, onEnterChat, onHuntMonsters, onExplore, onOpenShop, onCaptureProvince, onOpenTransport, onOpenResourceGathering, onAttackPlayer }) => {
   const { getProvinceOwner, provinces } = useKingdomContext();
   const { player } = usePlayerContext();
   const [nearbyPlayers, setNearbyPlayers] = useState([]);
@@ -126,9 +126,9 @@ export const LocationInfo = ({ location, onEnterChat, onHuntMonsters, onExplore,
               {location.type}
             </span>
             {kingdom && (
-              <span 
+              <span
                 className="text-xs px-2 py-1 border rounded text-white"
-                style={{ 
+                style={{
                   backgroundColor: `${kingdom.color}40`,
                   borderColor: kingdom.color,
                 }}
@@ -178,6 +178,16 @@ export const LocationInfo = ({ location, onEnterChat, onHuntMonsters, onExplore,
               </div>
               {KINGDOMS[p.kingdom] && (
                 <span className="text-xs">{KINGDOMS[p.kingdom].flagEmoji}</span>
+              )}
+              {/* Actions */}
+              {p.id !== player.id && (
+                <button
+                  onClick={() => onAttackPlayer && onAttackPlayer(p)}
+                  className="p-1.5 bg-red-900/50 hover:bg-red-700/80 border border-red-500 rounded-lg text-red-200 transition-colors"
+                  title="Напасти"
+                >
+                  ⚔️
+                </button>
               )}
             </div>
           ))}
