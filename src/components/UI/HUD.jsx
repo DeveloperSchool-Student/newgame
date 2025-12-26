@@ -1,7 +1,7 @@
-export const HUD = ({ onOpenInventory, onOpenCharacter, onOpenChat, onOpenClan, onOpenReferral, onOpenLeaderboard, onOpenPremium, onOpenAdmin, onOpenQuest, onOpenAchievements, onOpenPvP, onOpenStatistics, onOpenEvents, onOpenSkills, onOpenCrafting, onOpenClanWars, onOpenBattlePass, onOpenSubscription, onOpenMessaging }) => {
+export const HUD = ({ onOpenInventory, onOpenCharacter, onOpenChat, onOpenClan, onOpenReferral, onOpenLeaderboard, onOpenPremium, onOpenAdmin, onOpenQuest, onOpenAchievements, onOpenPvP, onOpenStatistics, onOpenEvents, onOpenSkills, onOpenCrafting, onOpenClanWars, onOpenBattlePass, onOpenSubscription, onOpenMessaging, onOpenDungeon, onOpenPolitics, onOpenFriends }) => {
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-fantasy-dark/95 backdrop-blur-md border-t-2 border-fantasy-purple z-20">
-      <div className="flex justify-around items-center p-4">
+    <div className="fixed bottom-0 left-0 right-0 bg-fantasy-dark/95 backdrop-blur-md border-t-2 border-fantasy-purple z-20 overflow-x-auto">
+      <div className="flex items-center gap-2 p-4 min-w-max">
         <button
           onClick={onOpenInventory}
           className="btn-fantasy flex flex-col items-center gap-2 px-6 py-3 bg-fantasy-purple/20 hover:bg-fantasy-purple/40 rounded-lg border border-fantasy-purple glow-purple"
@@ -75,6 +75,22 @@ export const HUD = ({ onOpenInventory, onOpenCharacter, onOpenChat, onOpenClan, 
         </button>
 
         <button
+          onClick={onOpenDungeon}
+          className="btn-fantasy flex flex-col items-center gap-2 px-6 py-3 bg-red-600/20 hover:bg-red-600/40 rounded-lg border border-red-500"
+        >
+          <span className="text-2xl">⚔️</span>
+          <span className="text-sm font-semibold text-white">Підземелля</span>
+        </button>
+
+        <button
+          onClick={onOpenPolitics}
+          className="btn-fantasy flex flex-col items-center gap-2 px-6 py-3 bg-purple-600/20 hover:bg-purple-600/40 rounded-lg border border-purple-500"
+        >
+          <span className="text-2xl">👑</span>
+          <span className="text-sm font-semibold text-white">Політика</span>
+        </button>
+
+        <button
           onClick={onOpenChat}
           className="btn-fantasy flex flex-col items-center gap-2 px-6 py-3 bg-fantasy-purple/20 hover:bg-fantasy-purple/40 rounded-lg border border-fantasy-purple glow-purple"
         >
@@ -92,6 +108,22 @@ export const HUD = ({ onOpenInventory, onOpenCharacter, onOpenChat, onOpenClan, 
             />
           </svg>
           <span className="text-sm font-semibold text-white">Чат</span>
+        </button>
+
+        <button
+          onClick={onOpenFriends}
+          className="btn-fantasy flex flex-col items-center gap-2 px-6 py-3 bg-blue-600/20 hover:bg-blue-600/40 rounded-lg border border-blue-500"
+        >
+          <span className="text-2xl">🤝</span>
+          <span className="text-sm font-semibold text-white">Друзі</span>
+        </button>
+
+        <button
+          onClick={onOpenMessaging}
+          className="btn-fantasy flex flex-col items-center gap-2 px-6 py-3 bg-purple-600/20 hover:bg-purple-600/40 rounded-lg border border-purple-500"
+        >
+          <span className="text-2xl">💬</span>
+          <span className="text-sm font-semibold text-white">Повідомлення</span>
         </button>
 
         <button

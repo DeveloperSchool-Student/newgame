@@ -15,7 +15,11 @@ export const LocationChatRealtime = ({ isOpen, onClose, activeLocation }) => {
   const [filter, setFilter] = useState('all'); // 'all', 'rp', 'normal'
   const [editingMessage, setEditingMessage] = useState(null);
   const [editText, setEditText] = useState('');
+  const [reactions, setReactions] = useState({});
+  const [showReactionPicker, setShowReactionPicker] = useState(null);
   const messagesEndRef = useRef(null);
+
+  const availableReactions = ['👍', '❤️', '😂', '😮', '😢', '😡', '🔥', '⭐'];
 
   // Завантаження повідомлень
   useEffect(() => {
@@ -50,6 +54,7 @@ export const LocationChatRealtime = ({ isOpen, onClose, activeLocation }) => {
     };
 
     loadMessages();
+    loadReactions();
 
     if (!supabase) return;
 
@@ -107,9 +112,83 @@ export const LocationChatRealtime = ({ isOpen, onClose, activeLocation }) => {
     };
   }, [isOpen, activeLocation]);
 
+  // Завантаження реакцій
+  const loadReactions = async () => {
+    if (!supabase || !activeLocation?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('message_reactions')
+        .select('*')
+        .in('message_id', messages.map(m => m.id));
+
+      if (error) throw error;
+
+      // Групуємо реакції по повідомленнях
+      const reactionsByMessage = {};
+      data?.forEach((reaction) => {
+        if (!reactionsByMessage[reaction.message_id]) {
+          reactionsByMessage[reaction.message_id] = [];
+        }
+        reactionsByMessage[reaction.message_id].push(reaction);
+      });
+
+      setReactions(reactionsByMessage);
+    } catch (error) {
+      console.error('Помилка завантаження реакцій:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      loadReactions();
+    }
+  }, [messages]);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Додати реакцію
+  const addReaction = async (messageId, emoji) => {
+    if (!supabase) return;
+
+    const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+    if (!tgUser) return;
+
+    try {
+      // Перевіряємо чи вже є така реакція від цього користувача
+      const existingReaction = reactions[messageId]?.find(
+        r => r.user_telegram_id === tgUser.id.toString() && r.emoji === emoji
+      );
+
+      if (existingReaction) {
+        // Видаляємо реакцію
+        const { error } = await supabase
+          .from('message_reactions')
+          .delete()
+          .eq('id', existingReaction.id);
+
+        if (error) throw error;
+      } else {
+        // Додаємо реакцію
+        const { error } = await supabase
+          .from('message_reactions')
+          .insert({
+            message_id: messageId,
+            user_telegram_id: tgUser.id.toString(),
+            emoji: emoji,
+          });
+
+        if (error) throw error;
+      }
+
+      await loadReactions();
+      setShowReactionPicker(null);
+    } catch (error) {
+      console.error('Помилка додавання реакції:', error);
+    }
+  };
 
   const handleSend = async () => {
     if (!inputValue.trim() || !activeLocation?.id) return;
@@ -376,16 +455,45 @@ export const LocationChatRealtime = ({ isOpen, onClose, activeLocation }) => {
                       )}
                     </div>
                     {/* Реакції */}
-                    <div className="flex gap-1 mt-2">
-                      {['👍', '❤️', '😂', '😮', '😢'].map((emoji) => (
-                        <button
-                          key={emoji}
-                          onClick={() => handleReaction(message.id, emoji)}
-                          className="text-lg hover:scale-125 transition-transform"
-                        >
-                          {emoji}
-                        </button>
-                      ))}
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {/* Показуємо існуючі реакції з підрахунком */}
+                      {reactions[message.id] && (() => {
+                        const reactionCounts = {};
+                        reactions[message.id].forEach(r => {
+                          reactionCounts[r.emoji] = (reactionCounts[r.emoji] || 0) + 1;
+                        });
+                        return Object.entries(reactionCounts).map(([emoji, count]) => (
+                          <button
+                            key={emoji}
+                            onClick={() => addReaction(message.id, emoji)}
+                            className="px-2 py-1 bg-fantasy-dark/50 rounded-full text-sm hover:scale-110 transition-transform flex items-center gap-1"
+                          >
+                            <span>{emoji}</span>
+                            <span className="text-xs text-gray-400">{count}</span>
+                          </button>
+                        ));
+                      })()}
+                      {/* Кнопка додавання нової реакції */}
+                      <button
+                        onClick={() => setShowReactionPicker(showReactionPicker === message.id ? null : message.id)}
+                        className="px-2 py-1 bg-fantasy-dark/50 rounded-full text-sm hover:scale-110 transition-transform"
+                      >
+                        ➕
+                      </button>
+                      {/* Picker реакцій */}
+                      {showReactionPicker === message.id && (
+                        <div className="absolute z-10 bg-fantasy-dark border border-fantasy-purple rounded-lg p-2 flex gap-1 shadow-lg">
+                          {availableReactions.map((emoji) => (
+                            <button
+                              key={emoji}
+                              onClick={() => addReaction(message.id, emoji)}
+                              className="text-xl hover:scale-125 transition-transform"
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center justify-between mt-1">
                       <div className="text-xs text-gray-500">

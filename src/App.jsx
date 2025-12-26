@@ -38,8 +38,12 @@ import { QuestSystem } from './components/Quest/QuestSystem';
 import { AchievementSystem } from './components/Achievements/AchievementSystem';
 import { PvPSystem } from './components/PvP/PvPSystem';
 import { ResourceGathering } from './components/ResourceGathering/ResourceGathering';
+import { CharacterCreation } from './components/CharacterCreation/CharacterCreation';
+import { DungeonSystem } from './components/Dungeon/DungeonSystem';
+import { PoliticsSystem } from './components/Politics/PoliticsSystem';
+import { FriendSystem } from './components/Social/FriendSystem';
 
-// Визначення локацій з босами
+// Визначення локацій з босами (21 локація)
 const locationsData = {
   capital: {
     id: 'capital',
@@ -60,7 +64,133 @@ const locationsData = {
     name: 'Забуті шахти',
     description: 'Темні підземні шахти з потужними ворогами. Тільки для досвідчених воїнів! Тут можна полювати на монстрів.',
     type: 'підземелля',
-    bossHP: 500, // Початковий HP боса для підземелля
+    bossHP: 500,
+  },
+  mountainPeak: {
+    id: 'mountainPeak',
+    name: 'Гірська Вершина',
+    description: 'Високі гори з холодним повітрям та небезпечними хижаками.',
+    type: 'гори',
+    bossHP: null,
+  },
+  seaPort: {
+    id: 'seaPort',
+    name: 'Морський Порт',
+    description: 'Великий порт з кораблями та моряками. Центр морської торгівлі.',
+    type: 'порт',
+    bossHP: null,
+  },
+  shadowGate: {
+    id: 'shadowGate',
+    name: 'Тіньова Брама',
+    description: 'Таємниче місце, де тіні оживають. Небезпечна територія для новачків.',
+    type: 'тіньове',
+    bossHP: 600,
+  },
+  volcanoIsland: {
+    id: 'volcanoIsland',
+    name: 'Вулканічний Острів',
+    description: 'Острів з активним вулканом. Високі температури та вогняні елементали.',
+    type: 'вулкан',
+    bossHP: 700,
+  },
+  frostCastle: {
+    id: 'frostCastle',
+    name: 'Крижаний Замок',
+    description: 'Замок, побудований з вічного льоду. Охороняється крижаними воїнами.',
+    type: 'замок',
+    bossHP: 650,
+  },
+  holyTemple: {
+    id: 'holyTemple',
+    name: 'Святий Храм',
+    description: 'Храм світла та справедливості. Священне місце паладинів.',
+    type: 'храм',
+    bossHP: null,
+  },
+  darkCitadel: {
+    id: 'darkCitadel',
+    name: 'Темна Цитадель',
+    description: 'Цитадель темних магів. Вхід заборонений для слабких духом.',
+    type: 'цитадель',
+    bossHP: 800,
+  },
+  dragonNest: {
+    id: 'dragonNest',
+    name: 'Гніздо Дракона',
+    description: 'Легендарне гніздо древніх драконів. Найнебезпечніша локація!',
+    type: 'гніздо',
+    bossHP: 1000,
+  },
+  elfGrove: {
+    id: 'elfGrove',
+    name: 'Ельфійська Гаща',
+    description: 'Магічний ліс ельфів. Тут можна знайти рідкісні рослини та артефакти.',
+    type: 'гаща',
+    bossHP: null,
+  },
+  dwarfForge: {
+    id: 'dwarfForge',
+    name: 'Двафійська Кузня',
+    description: 'Підземна кузня гномів. Тут виковують найкращу зброю.',
+    type: 'кузня',
+    bossHP: 750,
+  },
+  orcStronghold: {
+    id: 'orcStronghold',
+    name: 'Орочий Цитадель',
+    description: 'Фортеця орків. Місце постійних битв та турнірів.',
+    type: 'фортеця',
+    bossHP: 700,
+  },
+  skyGarden: {
+    id: 'skyGarden',
+    name: 'Небесний Сад',
+    description: 'Небесні острови в хмарах. Мирне місце ангелів.',
+    type: 'небеса',
+    bossHP: null,
+  },
+  abyssGate: {
+    id: 'abyssGate',
+    name: 'Брама Безодні',
+    description: 'Вхід до підземного світу. Демони та інші жахіття чекають тут.',
+    type: 'безодня',
+    bossHP: 900,
+  },
+  mechFactory: {
+    id: 'mechFactory',
+    name: 'Механічна Фабрика',
+    description: 'Фабрика дивних механізмів. Тут створюють автоматони.',
+    type: 'фабрика',
+    bossHP: null,
+  },
+  wildGrove: {
+    id: 'wildGrove',
+    name: 'Дика Гаща',
+    description: 'Дикі землі звірів. Друїди та перевертні живуть тут.',
+    type: 'дикі',
+    bossHP: null,
+  },
+  crystalTower: {
+    id: 'crystalTower',
+    name: 'Кристальна Вежа',
+    description: 'Вежа з магічних кристалів. Джерело магічної енергії.',
+    type: 'вежа',
+    bossHP: 800,
+  },
+  stormPeak: {
+    id: 'stormPeak',
+    name: 'Вершина Бурі',
+    description: 'Вершина, де постійно лютує буря. Блискавки падають щосекунди.',
+    type: 'буря',
+    bossHP: 850,
+  },
+  tradeHub: {
+    id: 'tradeHub',
+    name: 'Торговий Хаб',
+    description: 'Нейтральний торговий центр. Безпечне місце для торгівлі.',
+    type: 'торгівля',
+    bossHP: null,
   },
 };
 
@@ -151,6 +281,9 @@ function AppContent() {
     battlePass: false,
     subscription: false,
     messaging: false,
+    dungeon: false,
+    politics: false,
+    friends: false,
   });
 
   // Стан для HP босів (спільний для всіх гравців)
@@ -163,11 +296,12 @@ function AppContent() {
     experience: 0,
   });
 
-  const { player, addItem, addGold, updateHealth, addExperience, loadPlayerFromDB } = usePlayerContext();
+  const { player, addItem, addGold, updateHealth, addExperience, loadPlayerFromDB, initializeCharacter } = usePlayerContext();
   const { loadPlayerClan, clan } = useClanContext();
   const [telegramId, setTelegramId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [showCharacterCreation, setShowCharacterCreation] = useState(false);
 
   // Авторизація та завантаження прогресу
   useEffect(() => {
@@ -235,6 +369,10 @@ function AppContent() {
               })(),
               kingdom: savedProgress.kingdom || 'northernAlliance',
               rank: savedProgress.rank || 'recruit',
+              race: savedProgress.race || null,
+              class: savedProgress.class || null,
+              characterCreated: savedProgress.character_created || false,
+              name: savedProgress.character_name || 'Герой',
               clanId: savedProgress.clan_id || null,
               clanTag: savedProgress.clanTag || null,
               vipStatus: savedProgress.vip_status || false,
@@ -243,10 +381,18 @@ function AppContent() {
               bossesKilled: savedProgress.bosses_killed || 0,
             });
 
+            // Перевірка, чи створений персонаж
+            if (!savedProgress.character_created) {
+              setShowCharacterCreation(true);
+            }
+
             // Завантажуємо клан гравця
             if (savedProgress.clan_id) {
               await loadPlayerClan(profile.telegram_id);
             }
+          } else {
+            // Якщо немає збереженого прогресу, показуємо створення персонажа
+            setShowCharacterCreation(true);
           }
         }
       } catch (error) {
@@ -747,6 +893,21 @@ function AppContent() {
     setIsModalOpen((prev) => ({ ...prev, messaging: true }));
   }, [triggerHapticFeedback]);
 
+  const handleOpenDungeon = useCallback(() => {
+    triggerHapticFeedback();
+    setIsModalOpen((prev) => ({ ...prev, dungeon: true }));
+  }, [triggerHapticFeedback]);
+
+  const handleOpenPolitics = useCallback(() => {
+    triggerHapticFeedback();
+    setIsModalOpen((prev) => ({ ...prev, politics: true }));
+  }, [triggerHapticFeedback]);
+
+  const handleOpenFriends = useCallback(() => {
+    triggerHapticFeedback();
+    setIsModalOpen((prev) => ({ ...prev, friends: true }));
+  }, [triggerHapticFeedback]);
+
   const handleOpenClan = useCallback(() => {
     triggerHapticFeedback();
     setIsModalOpen((prev) => ({ ...prev, clan: true }));
@@ -756,6 +917,48 @@ function AppContent() {
     triggerHapticFeedback();
     setIsModalOpen((prev) => ({ ...prev, referral: true }));
   }, [triggerHapticFeedback]);
+
+  // Обробник створення персонажа
+  const handleCharacterCreationComplete = useCallback(async (characterData) => {
+    try {
+      // Ініціалізуємо персонажа з вибраними параметрами
+      initializeCharacter(characterData);
+
+      // Зберігаємо в базу даних
+      if (telegramId && supabase) {
+        await supabase
+          .from('profiles')
+          .update({
+            character_name: characterData.name,
+            race: characterData.race.id,
+            class: characterData.class.id,
+            kingdom: characterData.kingdom.id,
+            character_created: true,
+            max_health: characterData.race.bonuses.health + (characterData.class.bonuses.health || 0),
+            health: characterData.race.bonuses.health + (characterData.class.bonuses.health || 0),
+            max_mana: characterData.race.bonuses.mana + (characterData.class.bonuses.mana || 0),
+            mana: characterData.race.bonuses.mana + (characterData.class.bonuses.mana || 0),
+            stats: JSON.stringify({
+              strength: characterData.race.bonuses.strength + (characterData.class.bonuses.strength || 0),
+              agility: characterData.race.bonuses.agility + (characterData.class.bonuses.agility || 0),
+              intelligence: characterData.race.bonuses.intelligence + (characterData.class.bonuses.intelligence || 0),
+              defense: characterData.race.bonuses.defense + (characterData.class.bonuses.defense || 0),
+            }),
+          })
+          .eq('telegram_id', telegramId.toString());
+      }
+
+      // Приховуємо екран створення персонажа
+      setShowCharacterCreation(false);
+
+      // Показуємо привітання
+      showToast(`Вітаємо, ${characterData.name}! Ваша пригода почалася! 🎉`, 'success');
+      triggerHapticFeedback('success');
+    } catch (error) {
+      console.error('Помилка створення персонажа:', error);
+      showToast('Помилка створення персонажа', 'error');
+    }
+  }, [initializeCharacter, telegramId, showToast, triggerHapticFeedback]);
 
   const handleOpenLeaderboard = useCallback(() => {
     triggerHapticFeedback();
@@ -791,6 +994,11 @@ function AppContent() {
         </div>
       </div>
     );
+  }
+
+  // Character Creation Screen
+  if (showCharacterCreation) {
+    return <CharacterCreation onComplete={handleCharacterCreationComplete} />;
   }
 
   return (
@@ -873,6 +1081,9 @@ function AppContent() {
           onOpenBattlePass={handleOpenBattlePass}
           onOpenSubscription={handleOpenSubscription}
           onOpenMessaging={handleOpenMessaging}
+          onOpenDungeon={handleOpenDungeon}
+          onOpenPolitics={handleOpenPolitics}
+          onOpenFriends={handleOpenFriends}
         />
       )}
 
@@ -1001,6 +1212,24 @@ function AppContent() {
         isOpen={isModalOpen.messaging}
         onClose={() => handleCloseModal('messaging')}
         telegramId={telegramId}
+      />
+      <DungeonSystem
+        isOpen={isModalOpen.dungeon}
+        onClose={() => handleCloseModal('dungeon')}
+      />
+      <PoliticsSystem
+        isOpen={isModalOpen.politics}
+        onClose={() => handleCloseModal('politics')}
+        telegramId={telegramId}
+      />
+      <FriendSystem
+        isOpen={isModalOpen.friends}
+        onClose={() => handleCloseModal('friends')}
+        telegramId={telegramId}
+        onOpenMessaging={(friendId) => {
+          handleCloseModal('friends');
+          handleOpenModal('messaging');
+        }}
       />
     </div>
   );

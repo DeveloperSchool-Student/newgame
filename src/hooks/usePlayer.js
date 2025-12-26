@@ -12,6 +12,11 @@ const initialPlayerState = {
   gold: 100,
   kingdom: 'northernAlliance', // Початкове королівство
   rank: 'recruit', // Початковий ранг
+  race: null, // Раса персонажа
+  class: null, // Клас персонажа
+  characterCreated: false, // Чи створений персонаж
+  position: null, // Посада в королівстві
+  reputation: 0, // Репутація гравця
   clanId: null, // ID клану
   clanTag: null, // Тег клану
   vipStatus: false, // VIP статус
@@ -303,12 +308,66 @@ export const usePlayer = () => {
       ...prev,
       ...dbData,
       name: dbData.name || prev.name,
+      race: dbData.race || null,
+      class: dbData.class || null,
+      characterCreated: dbData.characterCreated || false,
+      position: dbData.position || null,
+      reputation: dbData.reputation || 0,
       clanId: dbData.clanId || null,
       clanTag: dbData.clanTag || null,
       vipStatus: dbData.vipStatus || false,
       vipExpiresAt: dbData.vipExpiresAt || null,
       crystals: dbData.crystals || 0,
       bossesKilled: dbData.bossesKilled || 0,
+    }));
+  }, []);
+
+  // Ініціалізація персонажа після створення
+  const initializeCharacter = useCallback((characterData) => {
+    const { race, kingdom, class: classData, name } = characterData;
+
+    // Базові характеристики з раси
+    const raceHealth = race.bonuses.health;
+    const raceMana = race.bonuses.mana;
+    const raceStats = {
+      strength: race.bonuses.strength,
+      agility: race.bonuses.agility,
+      intelligence: race.bonuses.intelligence,
+      defense: race.bonuses.defense,
+    };
+
+    // Додаткові бонуси з класу
+    const classHealth = classData.bonuses.health || 0;
+    const classMana = classData.bonuses.mana || 0;
+    const classStats = {
+      strength: classData.bonuses.strength || 0,
+      agility: classData.bonuses.agility || 0,
+      intelligence: classData.bonuses.intelligence || 0,
+      defense: classData.bonuses.defense || 0,
+    };
+
+    // Підсумкові характеристики
+    const maxHealth = raceHealth + classHealth;
+    const maxMana = raceMana + classMana;
+    const finalStats = {
+      strength: raceStats.strength + classStats.strength,
+      agility: raceStats.agility + classStats.agility,
+      intelligence: raceStats.intelligence + classStats.intelligence,
+      defense: raceStats.defense + classStats.defense,
+    };
+
+    setPlayer((prev) => ({
+      ...prev,
+      name,
+      kingdom: kingdom.id,
+      race: race.id,
+      class: classData.id,
+      characterCreated: true,
+      maxHealth,
+      health: maxHealth,
+      maxMana,
+      mana: maxMana,
+      stats: finalStats,
     }));
   }, []);
 
@@ -325,5 +384,6 @@ export const usePlayer = () => {
     useItem,
     updateStats,
     loadPlayerFromDB,
+    initializeCharacter,
   };
 };

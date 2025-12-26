@@ -63,6 +63,66 @@ export const KingdomProvider = ({ children }) => {
     return provinces[provinceId]?.taxRate || 0;
   }, [provinces]);
 
+  // Функція для рестарту світу - повертає всі провінції до початкового стану
+  const resetWorld = useCallback(async () => {
+    // Оновлюємо локально
+    setProvinces(initialProvinces);
+
+    // Скидаємо дохід королівств
+    setKingdomIncome({
+      northernAlliance: 0,
+      desertHorde: 0,
+      forestBrotherhood: 0,
+      mountainKingdom: 0,
+      seaEmpire: 0,
+      shadowClan: 0,
+      firelands: 0,
+      iceKingdom: 0,
+      lightOrder: 0,
+      darkEmpire: 0,
+      dragonLands: 0,
+      elfKingdom: 0,
+      dwarfHalls: 0,
+      orcTribes: 0,
+      celestialRealm: 0,
+      underworld: 0,
+      technocracy: 0,
+      wildlands: 0,
+      crystalDomain: 0,
+      stormlands: 0,
+      neutralCity: 0,
+    });
+
+    // Зберігаємо в Supabase
+    try {
+      const { supabase } = await import('../lib/supabaseClient');
+      
+      // Видаляємо всі записи провінцій та створюємо знову з початковими значеннями
+      await supabase.from('provinces').delete().neq('id', '');
+      
+      const provincesToInsert = Object.values(initialProvinces).map(province => ({
+        id: province.id,
+        name: province.name,
+        owner_kingdom_id: province.ownerKingdom,
+        tax_rate: province.taxRate,
+        can_capture: province.canCapture,
+        min_level_to_capture: province.minLevelToCapture || 0,
+      }));
+
+      const { error } = await supabase.from('provinces').insert(provincesToInsert);
+
+      if (error) {
+        console.error('Помилка рестарту світу:', error);
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Помилка рестарту світу:', error);
+      return false;
+    }
+  }, []);
+
   return (
     <KingdomContext.Provider
       value={{
@@ -73,6 +133,7 @@ export const KingdomProvider = ({ children }) => {
         captureProvince,
         getProvinceOwner,
         getProvinceTaxRate,
+        resetWorld,
       }}
     >
       {children}
